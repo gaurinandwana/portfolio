@@ -1,0 +1,6 @@
+{
+  "name": "Interactive Dev Portfolio",
+  "description": "A customizable portfolio website featuring a visual profile editor, interactive experience timelines, bento-grid tech stacks, and an AI chat recruiter agent powered by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
