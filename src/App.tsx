@@ -18,8 +18,10 @@ export default function App() {
   const [profile, setProfile] = useState<PortfolioProfile>(defaultProfile);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
 
-  // Load profile state from local storage on bootstrap
+  // Load profile state and check admin authorization on bootstrap
   useEffect(() => {
     try {
       const persisted = localStorage.getItem("dev_portfolio_profile_live");
@@ -36,7 +38,54 @@ export default function App() {
     } catch (e) {
       console.warn("Could not deserialize saved profile config, using defaults.");
     }
+
+    // Check query params for secret authorization
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const isManualAdmin = params.get("edit") === "true" || params.get("admin") === "true";
+      const isManualDisable = params.get("edit") === "false" || params.get("admin") === "false";
+
+      if (isManualDisable) {
+        localStorage.removeItem("gauri_portfolio_admin_authorized");
+        setIsAdminMode(false);
+      } else if (isManualAdmin) {
+        localStorage.setItem("gauri_portfolio_admin_authorized", "true");
+        setIsAdminMode(true);
+      } else {
+        const hasSavedAuth = localStorage.getItem("gauri_portfolio_admin_authorized") === "true";
+        setIsAdminMode(hasSavedAuth);
+      }
+    } catch (err) {
+      console.warn("Could not parse location queries.");
+    }
   }, []);
+
+  // Handle stealth easter egg clicks
+  const handleLogoClick = () => {
+    setLogoClickCount(prev => {
+      const nextCount = prev + 1;
+      if (nextCount >= 5) {
+        const nextState = !isAdminMode;
+        setIsAdminMode(nextState);
+        if (nextState) {
+          localStorage.setItem("gauri_portfolio_admin_authorized", "true");
+          setIsEditorOpen(true);
+        } else {
+          localStorage.removeItem("gauri_portfolio_admin_authorized");
+        }
+        return 0;
+      }
+      return nextCount;
+    });
+  };
+
+  // Reset chick count after 3 seconds of inactivity
+  useEffect(() => {
+    if (logoClickCount > 0) {
+      const timer = setTimeout(() => setLogoClickCount(0), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [logoClickCount]);
 
   // Update handler that auto-persists updates
   const handleProfileChange = (updated: PortfolioProfile) => {
@@ -77,15 +126,19 @@ export default function App() {
       {/* Top sticky Navigation Header */}
       <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-neutral-200 z-30 font-sans">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div 
+            onClick={handleLogoClick}
+            className="flex items-center gap-2 cursor-pointer select-none group"
+            title="Gauri's space logo"
+          >
             <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold font-mono shadow-xs select-none"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold font-mono shadow-xs transition-transform group-active:scale-95"
               style={{ backgroundColor: profile.themeColor }}
             >
               {profile.name.split(" ").map(n => n[0]).join("")}
             </div>
             <div>
-              <span className="text-sm font-bold text-neutral-900 leading-none">{profile.name}</span>
+              <span className="text-sm font-bold text-neutral-900 leading-none group-hover:text-neutral-700 transition-colors">{profile.name}</span>
               <span className="block text-[9px] text-neutral-400 font-mono tracking-wider">DEV PORTFOLIO</span>
             </div>
           </div>
@@ -105,14 +158,16 @@ export default function App() {
 
           {/* Builder Action Toggle */}
           <div className="flex items-center gap-2">
-            <button
-              id="header-toggle-builder-btn"
-              onClick={() => setIsEditorOpen(true)}
-              className="flex items-center gap-1 bg-neutral-900 hover:bg-neutral-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition shadow-sm"
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Customize Info</span>
-            </button>
+            {isAdminMode && (
+              <button
+                id="header-toggle-builder-btn"
+                onClick={() => setIsEditorOpen(true)}
+                className="flex items-center gap-1 bg-neutral-900 hover:bg-neutral-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition shadow-sm animate-fade-in"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Customize Info</span>
+              </button>
+            )}
 
             {/* Mobile hamburger toggle */}
             <button
@@ -144,7 +199,11 @@ export default function App() {
       {/* Main Sections */}
       <main className="flex-1">
         {/* LANDING PAGE -> HERO & ABOUT (with Metrics Counters) */}
-        <AboutSection profile={profile} onOpenEditor={() => setIsEditorOpen(true)} />
+        <AboutSection 
+          profile={profile} 
+          onOpenEditor={() => setIsEditorOpen(true)} 
+          isAdminMode={isAdminMode} 
+        />
 
         {/* LANDING PAGE -> SKILLS */}
         <SkillsSection profile={profile} />
@@ -198,23 +257,25 @@ export default function App() {
       </main>
 
       {/* Floating builder reminder badge on the far left column */}
-      <div className="hidden lg:block fixed bottom-6 left-6 z-40">
-        <div className="p-4 bg-white/95 border border-neutral-200 rounded-2xl shadow-lg font-sans max-w-xs space-y-2 backdrop-blur-sm">
-          <div className="flex items-center gap-1.5 font-bold text-xs text-indigo-600" style={{ color: profile.themeColor }}>
-            <Sparkles className="w-3.5 h-3.5" />
-            Configurator Portal
+      {isAdminMode && (
+        <div className="hidden lg:block fixed bottom-6 left-6 z-40 animate-fade-in">
+          <div className="p-4 bg-white/95 border border-neutral-200 rounded-2xl shadow-lg font-sans max-w-xs space-y-2 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-indigo-600" style={{ color: profile.themeColor }}>
+              <Sparkles className="w-3.5 h-3.5" />
+              Configurator Portal
+            </div>
+            <p className="text-[11px] text-neutral-500 leading-relaxed font-mono">
+              Want to use this portfolio for yourself? Click <strong>Customize</strong> above, update your profile files, and hit export!
+            </p>
+            <button
+              onClick={() => setIsEditorOpen(true)}
+              className="w-full py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-[10px] font-bold rounded-lg transition"
+            >
+              Open Customize Dashboard
+            </button>
           </div>
-          <p className="text-[11px] text-neutral-500 leading-relaxed font-mono">
-            Want to use this portfolio for yourself? Click <strong>Customize</strong> above, update your profile files, and hit export!
-          </p>
-          <button
-            onClick={() => setIsEditorOpen(true)}
-            className="w-full py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-[10px] font-bold rounded-lg transition"
-          >
-            Open Customize Dashboard
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Live profile customizer drawer */}
       <LiveEditor

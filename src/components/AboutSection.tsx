@@ -6,9 +6,10 @@ import { motion } from "motion/react";
 interface AboutSectionProps {
   profile: PortfolioProfile;
   onOpenEditor: () => void;
+  isAdminMode?: boolean;
 }
 
-export default function AboutSection({ profile, onOpenEditor }: AboutSectionProps) {
+export default function AboutSection({ profile, onOpenEditor, isAdminMode = false }: AboutSectionProps) {
   // Compute some interesting reactive metrics based on current loaded inputs
   const yearsExp = profile.experiences.filter(e => e.type === "work").length * 2 + 1; // logical estimate
   const completedProjects = profile.projects.length;
@@ -110,13 +111,15 @@ export default function AboutSection({ profile, onOpenEditor }: AboutSectionProp
               Explore Projects
               <ArrowRight className="w-4 h-4" />
             </a>
-            <button
-              id="cta-open-editor"
-              onClick={onOpenEditor}
-              className="px-6 py-3.5 bg-white hover:bg-neutral-100 text-neutral-800 border border-neutral-200 font-medium text-sm rounded-xl shadow-xs transition"
-            >
-              Edit This Portfolio
-            </button>
+            {isAdminMode && (
+              <button
+                id="cta-open-editor"
+                onClick={onOpenEditor}
+                className="px-6 py-3.5 bg-white hover:bg-neutral-100 text-neutral-800 border border-neutral-200 font-medium text-sm rounded-xl shadow-xs transition"
+              >
+                Edit This Portfolio
+              </button>
+            )}
           </motion.div>
         </div>
 

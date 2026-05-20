@@ -24,9 +24,9 @@ export default function ProjectsSection({ profile }: ProjectsSectionProps) {
         {/* Title row */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight text-neutral-900">Featured Projects</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-neutral-900">Projects</h2>
             <p className="text-sm text-neutral-500 max-w-lg">
-              A curated showcase of applications, tools, and visual frameworks built to solve interactive challenges.
+              A curated showcase of innovative applications, utilities, and software programs built to solve complex interactive challenges.
             </p>
           </div>
 
@@ -70,16 +70,6 @@ export default function ProjectsSection({ profile }: ProjectsSectionProps) {
                   <span className="absolute top-4 left-4 text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 bg-white/90 text-neutral-800 rounded-full font-mono backdrop-blur-xs shadow-xs">
                     {p.category}
                   </span>
-
-                  {p.featured && (
-                    <span 
-                      className="absolute top-4 right-4 flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 text-white rounded-full font-sans shadow-md"
-                      style={{ backgroundColor: profile.themeColor }}
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      Featured
-                    </span>
-                  )}
                 </div>
 
                 {/* Inner Info content */}
